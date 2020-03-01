@@ -2,9 +2,10 @@
 #include <fstream>
 #include <utility>
 #include "mklinkedlist.h"
+#include "mkarray.h"
 
 namespace lab3 {
-    struct Word {
+    struct LLWord {
         std::shared_ptr<MKLL::Node<char>> begin;
         std::shared_ptr<MKLL::Node<char>> end;
 
@@ -18,7 +19,7 @@ namespace lab3 {
             return len;
         }
 
-        bool operator==(const Word &rhs) const {
+        bool operator==(const LLWord &rhs) const {
             auto i = begin;
             auto j = rhs.begin;
             do {
@@ -29,11 +30,11 @@ namespace lab3 {
             } while (true);
         }
 
-        bool operator!=(const Word &rhs) const {
+        bool operator!=(const LLWord &rhs) const {
             return !(*this == rhs);
         }
 
-        friend std::ostream &operator<<(std::ostream &os, const Word &word) {
+        friend std::ostream &operator<<(std::ostream &os, const LLWord &word) {
             auto i = word.begin;
             while (i != word.end) {
                 os << i->getval();
@@ -44,7 +45,7 @@ namespace lab3 {
         }
     };
 
-    bool isalphabetical(const Word &w) {
+    bool isalphabetical(const LLWord &w) {
         char c = 'a';
         auto i = w.begin;
         while (i != w.end) {
@@ -55,14 +56,13 @@ namespace lab3 {
         return i->getval() == c;
     }
 
-
-    MKLL::DoubleLinkedList<lab3::Word> read(MKLL::DoubleLinkedList<char> &buffer) {
+    MKLL::DoubleLinkedList<lab3::LLWord> read_ll(MKLL::DoubleLinkedList<char> &buffer) {
         std::ifstream in("in.txt");
         in >> std::noskipws;
-        MKLL::DoubleLinkedList<lab3::Word> wordlist;
+        MKLL::DoubleLinkedList<lab3::LLWord> wordlist;
         char c;
         while (true) {
-            lab3::Word w;
+            lab3::LLWord w;
             // Skip space
             while (in >> c and isspace(c)) {}
             // Still no symbol => eof
@@ -86,16 +86,16 @@ namespace lab3 {
 
     void linkedlist_task() {
         MKLL::DoubleLinkedList<char> buffer;
-        MKLL::DoubleLinkedList<lab3::Word> wordlist = read(buffer);
+        MKLL::DoubleLinkedList<lab3::LLWord> wordlist = read_ll(buffer);
 
         if (wordlist.isempty()) {
             std::cout << "Еггор: Empty input" << std::endl;
             return;
         }
-        lab3::Word firstword = wordlist.begin()->getval();
+        lab3::LLWord firstword = wordlist.begin()->getval();
         std::cout << firstword << std::endl;
         for (auto w = wordlist.begin()->next; bool(w); w = w->next) {
-            lab3::Word& word = w->getval();
+            lab3::LLWord &word = w->getval();
             if (word != firstword and lab3::isalphabetical(word)) {
                 // Simultaneously insert to buffer and move end of the word
                 word.end = buffer.insert_after(word.end, '.');
@@ -109,10 +109,111 @@ namespace lab3 {
         }
     }
 
+    struct ArrWord {
+        MKAR::Array<char> * arr;
+        size_t begin;
+        size_t end;
+
+        ArrWord() : arr(nullptr) {}
+        ArrWord(MKAR::Array<char> &arr) : arr(&arr) {}
+
+        size_t length() {
+            return end - begin + 1;
+        }
+
+        bool operator==(const ArrWord &rhs) const {
+            auto i = begin;
+            auto j = rhs.begin;
+            do {
+                if ((*arr)[i] != (*rhs.arr)[i]) return false;
+                if (i == end or j == rhs.end) return i == end and j == rhs.end;
+                i++;
+                j++;
+            } while (true);
+        }
+
+        bool operator!=(const ArrWord &rhs) const {
+            return !(*this == rhs);
+        }
+
+        friend std::ostream &operator<<(std::ostream &os, const ArrWord &word) {
+            auto i = word.begin;
+            while (i != word.end) {
+                os << (*word.arr)[i];
+                i++;
+            }
+            os << (*word.arr)[i];
+            return os;
+        }
+    };
+
+    bool isalphabetical(const ArrWord &w) {
+        char c = 'a';
+        auto i = w.begin;
+        while (i != w.end) {
+            if ((*w.arr)[i] != c) return false;
+            i++;
+            c++;
+        };
+        return (*w.arr)[i] == c;
+    }
+
+    MKAR::Array<ArrWord> read_arr(MKAR::Array<char> &buffer) {
+        std::ifstream in("in.txt");
+        in >> std::noskipws;
+        MKAR::Array<lab3::ArrWord> wordlist(20);
+        char c;
+        while (true) {
+            lab3::ArrWord w(buffer);
+            // Skip space
+            while (in >> c and isspace(c)) {}
+            // Still no symbol => eof
+            if (!isgraph(c) or in.eof()) return wordlist;
+
+            // Now c contains non-space - append as first symbol of word
+            w.begin = buffer.push_back(c);
+            // Read word till space
+            while (in >> c and !isspace(c)) {
+                buffer.push_back(c);
+            }
+            // End word
+            w.end = buffer.len-1;
+            // Register word
+            wordlist.push_back(w);
+            // Add delimiter to buffer
+            buffer.push_back(' ');
+        }
+    }
+
+    void array_task() {
+        MKAR::Array<char> buffer(256);
+        MKAR::Array<ArrWord> wordlist = read_arr(buffer);
+
+        if (wordlist.isempty()) {
+            std::cout << "Еггор: Empty input" << std::endl;
+            return;
+        }
+        ArrWord firstword = wordlist[0];
+        std::cout << firstword << std::endl;
+        for (size_t i = 1; i < wordlist.len; i++) {
+            lab3::ArrWord &word = wordlist[i];
+            if (word != firstword and lab3::isalphabetical(word)) {
+                // Simultaneously insert to buffer and move end of the word
+                word.end = buffer.insert_after(word.end, '.');
+                // Remove first letter
+                buffer.remove(word.begin); // remove from buffer
+                // Add period at the end: s
+                std::cout << "edited: ";
+            }
+            std::cout << word << std::endl;
+        }
+    }
 }
 
 int main() {
+
     lab3::linkedlist_task();
+    lab3::array_task();
 
     return 0;
 }
