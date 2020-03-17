@@ -1,6 +1,0 @@
-abc
-a
-ab
-abc
-abcd
-hello

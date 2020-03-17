@@ -3,6 +3,8 @@
 #include <utility>
 #include "mklinkedlist.h"
 #include "mkarray.h"
+#include "mkstack.h"
+#include "mathparser.h"
 
 namespace lab3 {
     struct LLWord {
@@ -110,11 +112,12 @@ namespace lab3 {
     }
 
     struct ArrWord {
-        MKAR::Array<char> * arr;
+        MKAR::Array<char> *arr;
         size_t begin;
         size_t end;
 
         ArrWord() : arr(nullptr) {}
+
         ArrWord(MKAR::Array<char> &arr) : arr(&arr) {}
 
         size_t length() {
@@ -177,7 +180,7 @@ namespace lab3 {
                 buffer.push_back(c);
             }
             // End word
-            w.end = buffer.len-1;
+            w.end = buffer.len - 1;
             // Register word
             wordlist.push_back(w);
             // Add delimiter to buffer
@@ -210,10 +213,79 @@ namespace lab3 {
     }
 }
 
+namespace std {
+    template<class T>
+    std::ostream &operator<<(std::ostream &os, MKLL::DoubleLinkedList<T> list) {
+        os << "[";
+        for (auto i = list.begin(); i != list.end(); i = i->next) {
+            os << i->getval() << "; ";
+        }
+        os << list.end()->getval() << "]";
+        return os;
+    }
+
+    template<class T>
+    std::ostream &operator<<(std::ostream &os, MKAR::Array<T> arr) {
+        os << "[";
+        for (auto i = 0; i != arr.len; i++) {
+            os << arr[i] << "; ";
+        }
+        os << "]";
+        return os;
+    }
+
+    std::ostream &operator<<(std::ostream &os, statement_node sn) {
+        if (sn.type == statement_node::VAL) {
+            os << sn.val;
+        } else {
+            os << "(" << sn.op << ")";
+        }
+
+        return os;
+    }
+}
+
+namespace lab4 {
+
+}
+
+void test() {
+    MKLL::Stack<int> s;
+    s.push(10);
+    s.push(20);
+    s.push(30);
+    s.push(40);
+    std::cout << s.list << std::endl;
+    std::cout << s.pop() << std::endl; // << s.pop() << s.pop() << s.pop() << std::endl;
+    std::cout << s.pop() << std::endl;
+    std::cout << s.pop() << std::endl;
+    std::cout << s.pop() << std::endl;
+}
+
 int main() {
 
-    lab3::linkedlist_task();
-    lab3::array_task();
+//    lab3::linkedlist_task();
+//    lab3::array_task();
+
+    MathStatement ms;
+    std::string input[] = {
+        "(3-((4+5)*(6-7)))+(2+1)",
+        "1+2",
+        "1+(4+5)",
+        "(1+2)*(4+5)",
+        "(1+2)*5",
+        "(1+2)*(3+(4+5))",
+        "(1+2)*((3+4)+5)",
+        "((3+4)+5)*(1+2)",
+        "(5-(3+4))*(1+2)",
+        "1*((5-(3+4))*(1+2))",
+        "((5-(3+4))*(1+2))*1",
+    };
+
+    for (const auto& s: input) {
+        ms.build_from_infix(s);
+        std::cout << ms.line.list << " = " << ms.compute() << std::endl;
+    }
 
     return 0;
 }

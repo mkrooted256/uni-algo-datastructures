@@ -20,7 +20,7 @@ namespace MKAR {
         }
 
         void shift_right(size_t start) {
-            if (len < size and len>0) {
+            if (len < size) {
                 len++;
                 for (size_t j = len; j > start; j--) {
                     mem[j] = mem[j - 1];
@@ -28,7 +28,7 @@ namespace MKAR {
             }
         }
         void shift_left(size_t start) {
-            if (len < size and len>0) {
+            if (len>0) {
                 len--;
                 for (size_t j = start; j < len; j++) {
                     mem[j] = mem[j+1];
@@ -69,6 +69,10 @@ namespace MKAR {
 
         bool isempty() {
             return !len;
+        }
+
+        T& get(size_t i) {
+            return mem[i];
         }
 
         T& operator[](size_t i) {
